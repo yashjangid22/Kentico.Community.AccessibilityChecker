@@ -31,7 +31,7 @@ stages:
             value: true
 
           - name: slnPath
-            value: src/Kentico.Xperience.RepoTemplate.Libs.slnx
+            value: src/XperienceCommunity.AccessibilityChecker.Libs.slnx
 
         steps:
           - task: UseDotNet@2
@@ -43,7 +43,7 @@ stages:
             inputs:
               targetType: inline
               script: |
-                $fileContent = Get-Content -Path 'src/Kentico.Xperience.RepoTemplate.Admin/Client/package.json' -Raw
+                $fileContent = Get-Content -Path 'src/XperienceCommunity.AccessibilityChecker.Admin/Client/package.json' -Raw
                 $jsonObject = ConvertFrom-Json -InputObject $fileContent
 
                 # Get the value of engines.node
@@ -96,11 +96,11 @@ stages:
               Configuration: $(Configuration)
               artifacts:
                 - Core:
-                  artifactName: "Kentico-Xperience-RepoTemplate"
-                  projectPath: "src/Kentico.Xperience.RepoTemplate"
+                  artifactName: "XperienceCommunity.AccessibilityChecker"
+                  projectPath: "src/XperienceCommunity.AccessibilityChecker"
                 - Admin:
-                  artifactName: "Kentico-Xperience-RepoTemplate-Admin"
-                  projectPath: "src/Kentico.Xperience.RepoTemplate.Admin"
+                  artifactName: "XperienceCommunity.AccessibilityChecker-Admin"
+                  projectPath: "src/XperienceCommunity.AccessibilityChecker.Admin"
 
   - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
       - stage: PublishNuGetPackages

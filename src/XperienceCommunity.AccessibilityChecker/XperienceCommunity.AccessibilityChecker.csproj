@@ -1,0 +1,72 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<OutputType>Library</OutputType>
+		<IsPackable>true</IsPackable>
+		<AssemblyName>XperienceCommunity.AccessibilityChecker</AssemblyName>
+		<RootNamespace>XperienceCommunity.AccessibilityChecker</RootNamespace>
+		<PackageId>XperienceCommunity.AccessibilityChecker</PackageId>
+		<Version>1.2.0</Version>
+		<Authors>yashjangid22</Authors>
+		<Description>Adds an Accessibility checker tab inside the Xperience by Kentico admin panel.</Description>
+		<PackageTags>kentico;xperience;accessibility;wcag;axe-core</PackageTags>
+		<PackageProjectUrl>https://github.com/yashjangid22/Kentico.Community.AccessibilityChecker</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/yashjangid22/Kentico.Community.AccessibilityChecker</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<AdminOrgName>xperiencecommunity</AdminOrgName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Kentico.Xperience.Admin" />
+		<PackageReference Include="Kentico.Xperience.WebApp" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Core" />
+		<PackageReference Include="Microsoft.Playwright" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="Client\node_modules\**" />
+		<EmbeddedResource Remove="Client\node_modules\**" />
+		<None Remove="Client\node_modules\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="XperienceCommunity.AccessibilityChecker.Tests" />
+	</ItemGroup>
+
+	<!--
+		This Include is a static, project-evaluation-time item (unlike AdminClientPath below, which
+		is globbed dynamically inside a Target after npm run build). Client\node_modules must exist
+		on disk before dotnet build/restore even starts evaluating this project, not just before
+		NpmBuild executes. See docs/Contributing-Setup.md.
+	-->
+	<ItemGroup>
+		<EmbeddedResource Include="Client\node_modules\axe-core\axe.min.js">
+			<LogicalName>XperienceCommunity.AccessibilityChecker.Scanning.axe.min.js</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<!--
+		AdminClientPath must be globbed inside this target (after npm run build), not as a
+		top-level ItemGroup. Top-level item globs are evaluated once during project evaluation,
+		before any target runs, so a static glob would always see an empty Client\dist folder
+		on a clean checkout (Client\dist is gitignored) and Kentico's SDK targets would silently
+		embed a placeholder instead of the real client bundle.
+
+		BeforeTargets must name IncludeEmbededResource (from Kentico.Xperience.Admin.targets)
+		directly rather than Build: both targets hook "before Build", but Kentico's target is
+		imported ahead of this one and runs first unless we pin the dependency explicitly.
+	-->
+	<Target Name="NpmBuild" BeforeTargets="IncludeEmbededResource;Build">
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm run build" />
+		<ItemGroup>
+			<AdminClientPath Include="Client\dist\**">
+				<ProjectName>accessibility.checker</ProjectName>
+			</AdminClientPath>
+		</ItemGroup>
+	</Target>
+
+</Project>

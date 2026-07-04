@@ -38,6 +38,42 @@ SQL Server 2019 or newer compatible database
 - VS Code with official [MSSQL extension](https://marketplace.visualstudio.com/items?itemName=ms-mssql.mssql)
 - MS SQL Server Management Studio
 
+### Client npm dependencies
+
+Before running `dotnet build`/`dotnet restore` on `XperienceCommunity.AccessibilityChecker` for the
+first time (or after pulling changes to `Client/package.json`), run `npm install` inside
+`src/XperienceCommunity.AccessibilityChecker/Client`:
+
+```powershell
+cd src/XperienceCommunity.AccessibilityChecker/Client
+npm install
+```
+
+This is required *before* the .NET build, not just before the client bundle is built: the project
+embeds axe-core's `axe.min.js` (used for server-side scanning) straight out of
+`Client/node_modules/axe-core`, and that `EmbeddedResource` item is evaluated at MSBuild
+project-evaluation time - before any build target runs. If `Client/node_modules` doesn't exist yet,
+the build will fail to find the file rather than silently skipping it.
+
+### Headless browser (Playwright)
+
+The accessibility scan feature renders pages with a headless Chromium browser via
+[Playwright for .NET](https://playwright.dev/dotnet/). The `Microsoft.Playwright` NuGet package
+does not bundle browser binaries - install Chromium once per machine (dev box and CI) after building
+the **consuming application** (the Sample Project below, or your own site) - not this library
+project itself. A class library's own build output does not copy its dependency assemblies, so
+`playwright.ps1` only works from an app's build output, where `Microsoft.Playwright.dll` is
+actually present alongside it:
+
+```powershell
+pwsh <path-to-consuming-app>/bin/Debug/<tfm>/playwright.ps1 install chromium
+# e.g. pwsh examples/DancingGoat/bin/Debug/net8.0/playwright.ps1 install chromium
+```
+
+This is a manual, one-time-per-machine step, deliberately not wired into `dotnet build` - running a
+browser download on every build would slow down normal development for no benefit after the first
+install.
+
 ## Sample Project
 
 ### Database Setup
@@ -67,7 +103,7 @@ To run the Sample app Admin customization in development mode, add the following
    - `refactor/` - for restructuring of existing features
    - `fix/` - for bugfixes
 
-1. Run `dotnet format` against the `Kentico.Xperience.RepoTemplate` solution
+1. Run `dotnet format` against the `XperienceCommunity.AccessibilityChecker` solution
 
    > use `dotnet: format` VS Code task.
 

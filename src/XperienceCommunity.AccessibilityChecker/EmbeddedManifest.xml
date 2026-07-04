@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Manifest>
+	<ManifestVersion>1.0</ManifestVersion>
+	<FileSystem>
+		<File Name="Microsoft.Extensions.FileProviders.Embedded.Manifest.xml">
+			<ResourcePath>Microsoft.Extensions.FileProviders.Embedded.Manifest.xml</ResourcePath>
+		</File>
+		<Directory Name="xperiencecommunity.accessibility.checker">
+			<File Name="entry.js">
+				<ResourcePath>XperienceCommunity.AccessibilityChecker.Client.dist.entry.js</ResourcePath>
+			</File>
+			<File Name="entry.js.LICENSE.txt">
+				<ResourcePath>XperienceCommunity.AccessibilityChecker.Client.dist.entry.js.LICENSE.txt</ResourcePath>
+			</File>
+		</Directory>
+	</FileSystem>
+</Manifest>
