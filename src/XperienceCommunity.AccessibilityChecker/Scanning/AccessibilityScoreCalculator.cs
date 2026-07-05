@@ -13,11 +13,11 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
 
         public static int Calculate(int criticalRuleCount, int seriousRuleCount, int moderateRuleCount, int minorRuleCount)
         {
-            var deduction =
-                criticalRuleCount * CriticalWeight +
-                seriousRuleCount * SeriousWeight +
-                moderateRuleCount * ModerateWeight +
-                minorRuleCount * MinorWeight;
+            int deduction =
+                (criticalRuleCount * CriticalWeight) +
+                (seriousRuleCount * SeriousWeight) +
+                (moderateRuleCount * ModerateWeight) +
+                (minorRuleCount * MinorWeight);
 
             return Math.Max(0, 100 - deduction);
         }

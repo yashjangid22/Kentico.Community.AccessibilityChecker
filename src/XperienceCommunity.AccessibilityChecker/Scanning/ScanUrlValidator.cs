@@ -73,21 +73,45 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 return true;
             }
 
-            var bytes = address.GetAddressBytes();
+            byte[] bytes = address.GetAddressBytes();
 
             if (address.AddressFamily == AddressFamily.InterNetwork)
             {
-                if (bytes[0] == 10) return true; // 10.0.0.0/8
-                if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return true; // 172.16.0.0/12
-                if (bytes[0] == 192 && bytes[1] == 168) return true; // 192.168.0.0/16
-                if (bytes[0] == 169 && bytes[1] == 254) return true; // 169.254.0.0/16 (link-local)
+                if (bytes[0] == 10)
+                {
+                    return true; // 10.0.0.0/8
+                }
+
+                if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
+                {
+                    return true; // 172.16.0.0/12
+                }
+
+                if (bytes[0] == 192 && bytes[1] == 168)
+                {
+                    return true; // 192.168.0.0/16
+                }
+
+                if (bytes[0] == 169 && bytes[1] == 254)
+                {
+                    return true; // 169.254.0.0/16 (link-local)
+                }
+
                 return false;
             }
 
             if (address.AddressFamily == AddressFamily.InterNetworkV6)
             {
-                if (address.IsIPv6LinkLocal) return true;
-                if ((bytes[0] & 0xFE) == 0xFC) return true; // fc00::/7 (unique local)
+                if (address.IsIPv6LinkLocal)
+                {
+                    return true;
+                }
+
+                if ((bytes[0] & 0xFE) == 0xFC)
+                {
+                    return true; // fc00::/7 (unique local)
+                }
+
                 return false;
             }
 

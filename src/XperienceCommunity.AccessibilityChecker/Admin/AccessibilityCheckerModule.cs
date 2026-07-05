@@ -1,7 +1,7 @@
-﻿using Kentico.Xperience.Admin.Base;
-
-using CMS;
+﻿using CMS;
 using CMS.Core;
+
+using Kentico.Xperience.Admin.Base;
 
 using XperienceCommunity.AccessibilityChecker.Admin;
 

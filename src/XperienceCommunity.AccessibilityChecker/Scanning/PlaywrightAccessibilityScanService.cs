@@ -1,8 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
 
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 using XperienceCommunity.AccessibilityChecker.Models;
@@ -62,7 +60,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 return AccessibilityScanOutcome.Failure(ScanErrorCode.ScanFailed, "Unable to start the headless browser.");
             }
 
-            var url = validation.Uri!.ToString();
+            string url = validation.Uri!.ToString();
             await using var context = await browserInstance.NewContextAsync();
             try
             {
@@ -98,9 +96,9 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 try
                 {
                     await page.AddScriptTagAsync(new PageAddScriptTagOptions { Content = axeCoreScript });
-                    var axeJson = await page.EvaluateAsync<string>(
+                    string axeJson = await page.EvaluateAsync<string>(
                         "async () => JSON.stringify(await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] } }))");
-                    axeResult = JsonSerializer.Deserialize<AxeRawResult>(axeJson, JsonOptions)
+                    axeResult = JsonSerializer.Deserialize<AxeRawResult>(axeJson, jsonOptions)
                         ?? throw new InvalidOperationException("axe-core returned an empty result.");
                 }
                 catch (Exception ex)
@@ -110,7 +108,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 }
 
                 var issuesBySeverity = SeverityMapper.GroupBySeverity(axeResult.Violations);
-                var score = AccessibilityScoreCalculator.Calculate(
+                int score = AccessibilityScoreCalculator.Calculate(
                     issuesBySeverity.Critical.Count,
                     issuesBySeverity.Serious.Count,
                     issuesBySeverity.Moderate.Count,
@@ -155,7 +153,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
             }
         }
 
-        private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
         private static string LoadEmbeddedAxeCoreScript()
         {

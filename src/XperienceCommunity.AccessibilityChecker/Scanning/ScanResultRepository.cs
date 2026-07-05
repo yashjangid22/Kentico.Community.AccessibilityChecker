@@ -9,9 +9,9 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
 {
     public interface IScanResultRepository
     {
-        Task<IReadOnlyList<ScanResultDto>> GetAllAsync(CancellationToken cancellationToken = default);
-        Task UpsertAsync(ScanResultDto result, CancellationToken cancellationToken = default);
-        Task DeleteAsync(string url, CancellationToken cancellationToken = default);
+        public Task<IReadOnlyList<ScanResultDto>> GetAllAsync(CancellationToken cancellationToken = default);
+        public Task UpsertAsync(ScanResultDto result, CancellationToken cancellationToken = default);
+        public Task DeleteAsync(string url, CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
     internal sealed class ScanResultRepository : IScanResultRepository
     {
         private const string TableName = "XperienceCommunity_AccessibilityScanResult";
-        private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
         private readonly SemaphoreSlim initLock = new(1, 1);
         private bool tableEnsured;
@@ -43,8 +43,8 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
 
             while (await reader.ReadAsync(cancellationToken))
             {
-                var issuesJson = reader.GetString(reader.GetOrdinal("IssuesJson"));
-                var issues = JsonSerializer.Deserialize<IssuesBySeverityDto>(issuesJson, JsonOptions) ?? new IssuesBySeverityDto();
+                string issuesJson = reader.GetString(reader.GetOrdinal("IssuesJson"));
+                var issues = JsonSerializer.Deserialize<IssuesBySeverityDto>(issuesJson, jsonOptions) ?? new IssuesBySeverityDto();
 
                 results.Add(new ScanResultDto
                 {
@@ -62,23 +62,27 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
         {
             await EnsureTableAsync(cancellationToken);
 
-            var issuesJson = JsonSerializer.Serialize(result.IssuesBySeverity, JsonOptions);
+            string issuesJson = JsonSerializer.Serialize(result.IssuesBySeverity, jsonOptions);
 
-            var existsParameters = new QueryDataParameters();
-            existsParameters.Add("@Url", result.Url);
-            var existingId = await ConnectionHelper.ExecuteScalarAsync(
+            var existsParameters = new QueryDataParameters
+            {
+                { "@Url", result.Url }
+            };
+            object? existingId = await ConnectionHelper.ExecuteScalarAsync(
                 $"SELECT ScanResultID FROM {TableName} WHERE Url = @Url",
                 existsParameters,
                 QueryTypeEnum.SQLQuery,
                 cancellationToken);
 
-            var writeParameters = new QueryDataParameters();
-            writeParameters.Add("@Url", result.Url);
-            writeParameters.Add("@Score", result.Score);
-            writeParameters.Add("@LastScannedOn", result.Timestamp);
-            writeParameters.Add("@IssuesJson", issuesJson);
+            var writeParameters = new QueryDataParameters
+            {
+                { "@Url", result.Url },
+                { "@Score", result.Score },
+                { "@LastScannedOn", result.Timestamp },
+                { "@IssuesJson", issuesJson }
+            };
 
-            var query = existingId is null or DBNull
+            string query = existingId is null or DBNull
                 ? $"INSERT INTO {TableName} (Url, Score, LastScannedOn, IssuesJson) VALUES (@Url, @Score, @LastScannedOn, @IssuesJson)"
                 : $"UPDATE {TableName} SET Score = @Score, LastScannedOn = @LastScannedOn, IssuesJson = @IssuesJson WHERE Url = @Url";
 
@@ -89,8 +93,10 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
         {
             await EnsureTableAsync(cancellationToken);
 
-            var parameters = new QueryDataParameters();
-            parameters.Add("@Url", url);
+            var parameters = new QueryDataParameters
+            {
+                { "@Url", url }
+            };
             await ConnectionHelper.ExecuteNonQueryAsync(
                 $"DELETE FROM {TableName} WHERE Url = @Url",
                 parameters,
@@ -113,7 +119,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                     return;
                 }
 
-                var ddl = $@"
+                string ddl = $@"
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '{TableName}')
 BEGIN
     CREATE TABLE {TableName} (
@@ -124,7 +130,7 @@ BEGIN
         IssuesJson NVARCHAR(MAX) NOT NULL
     )
 END";
-                await ConnectionHelper.ExecuteNonQueryAsync(ddl, new QueryDataParameters(), QueryTypeEnum.SQLQuery, cancellationToken);
+                await ConnectionHelper.ExecuteNonQueryAsync(ddl, [], QueryTypeEnum.SQLQuery, cancellationToken);
                 tableEnsured = true;
             }
             finally
