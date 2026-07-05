@@ -44,20 +44,24 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Install Client npm dependencies
+        run: npm ci
+        working-directory: src/XperienceCommunity.AccessibilityChecker/Client
+
       - name: Install dependencies
         run: |
-          dotnet restore `
+          dotnet restore src/XperienceCommunity.AccessibilityChecker.Libs.slnx `
             --locked-mode
 
       - name: Build Solution
         run: |
-          dotnet build `
+          dotnet build src/XperienceCommunity.AccessibilityChecker.Libs.slnx `
             --configuration Release `
             --no-restore
 
       - name: Test Solution
         run: |
-          dotnet test `
+          dotnet test src/XperienceCommunity.AccessibilityChecker.Libs.slnx `
             --configuration Release `
             --no-build `
             --no-restore
