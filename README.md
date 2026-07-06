@@ -1,4 +1,3 @@
-[![CI: Build and Test](https://github.com/yashjangid22/Kentico.Community.AccessibilityChecker/actions/workflows/ci.yml/badge.svg)](https://github.com/yashjangid22/Kentico.Community.AccessibilityChecker/actions/workflows/ci.yml)
 
 # Xperience by Kentico: Accessibility Checker
 
