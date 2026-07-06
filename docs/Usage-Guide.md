@@ -26,27 +26,6 @@ to be registered manually — the admin application tile, its page, and the API 
 discovered automatically once the package is referenced (Xperience by Kentico scans referenced
 assemblies for admin modules on startup).
 
-### 1.3 The headless browser installs itself automatically
-
-Scanning is done by rendering the target page in a real, headless Chromium browser
-([Playwright for .NET](https://playwright.dev/dotnet/)), so axe-core can inspect the fully
-rendered DOM — including anything added by JavaScript. Playwright's NuGet package does **not**
-bundle the browser binary, but you don't need to install it manually: the first time you click
-**Scan** on a machine that doesn't have Chromium yet, the package detects that and downloads it
-automatically (about 180MB, roughly a minute depending on your connection), then completes that
-same scan once it's ready. Every scan after that is fast, and this only happens once per
-machine/deployment target — you'll see a log line ("Chromium is not installed yet...") the one
-time it happens.
-
-If you'd rather not wait on the first scan (e.g. to warm up a new deployment ahead of time), you
-can still trigger the same download manually after your first build:
-
-```powershell
-pwsh <your-app>/bin/Debug/<your-target-framework>/playwright.ps1 install chromium
-```
-
-This is entirely optional now — it's the same download the app performs automatically, just done
-ahead of time instead of on first use.
 
 ### 1.4 Verify it's installed
 
