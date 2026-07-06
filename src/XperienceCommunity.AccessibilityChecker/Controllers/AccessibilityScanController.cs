@@ -49,6 +49,8 @@ namespace XperienceCommunity.AccessibilityChecker.Controllers
                     StatusCode(StatusCodes.Status502BadGateway, new ScanErrorDto { Code = "UnreachablePage", Message = outcome.ErrorMessage! }),
                 { ErrorCode: ScanErrorCode.Timeout } =>
                     StatusCode(StatusCodes.Status504GatewayTimeout, new ScanErrorDto { Code = "Timeout", Message = outcome.ErrorMessage! }),
+                { ErrorCode: ScanErrorCode.AccessRestricted } =>
+                    StatusCode(StatusCodes.Status403Forbidden, new ScanErrorDto { Code = "AccessRestricted", Message = outcome.ErrorMessage! }),
                 _ =>
                     StatusCode(StatusCodes.Status500InternalServerError, new ScanErrorDto { Code = "ScanFailed", Message = outcome.ErrorMessage ?? "The scan failed." })
             };

@@ -34,6 +34,13 @@ function formatTimestamp(timestamp: string): string {
     }
 }
 
+function getErrorHeadline(errorCode: string, hasPriorResult: boolean): string {
+    if (errorCode === "AccessRestricted") {
+        return "Access restricted by this site";
+    }
+    return hasPriorResult ? "Re-scan failed" : "Scan failed";
+}
+
 export const ScanCard = ({ state, onRescan, onDelete }: ScanCardProps) => {
     const { url, isScanning, result, error } = state;
     const isFirstScan = isScanning && !result && !error;
@@ -81,7 +88,7 @@ export const ScanCard = ({ state, onRescan, onDelete }: ScanCardProps) => {
                     <Callout
                         type={CalloutType.FriendlyWarning}
                         placement={CalloutPlacementType.OnPaper}
-                        headline={result ? "Re-scan failed" : "Scan failed"}
+                        headline={getErrorHeadline(error.code, !!result)}
                         subheadline={error.message}
                     />
                 </Box>

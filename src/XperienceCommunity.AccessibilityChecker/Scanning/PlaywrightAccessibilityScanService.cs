@@ -61,15 +61,25 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
             }
 
             string url = validation.Uri!.ToString();
-            await using var context = await browserInstance.NewContextAsync();
+            // BypassCSP is required for the axe-core injection below: some sites (e.g. GitHub)
+            // send a Content-Security-Policy that disallows inline <script> tags, which would
+            // otherwise silently block axe-core from ever running.
+            await using var context = await browserInstance.NewContextAsync(new BrowserNewContextOptions { BypassCSP = true });
             try
             {
                 var page = await context.NewPageAsync();
                 page.SetDefaultTimeout(NavigationTimeoutMs);
 
+                IResponse? response;
                 try
                 {
-                    await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.Load, Timeout = NavigationTimeoutMs });
+                    // Waits for DOMContentLoaded rather than the full "load" event: many real
+                    // pages have slow/unreliable third-party ad or analytics requests that keep
+                    // the browser's load event from firing for a long time (or at all), even
+                    // though the actual page content axe-core needs to inspect is ready almost
+                    // immediately. Waiting on "load" made otherwise-fast pages fail with a
+                    // timeout purely because of unrelated background network activity.
+                    response = await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = NavigationTimeoutMs });
 
                     // Best-effort settle for JS-rendered content. Allowed to time out without
                     // failing the whole scan - pages with long-polling/analytics beacons may
@@ -90,6 +100,18 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 catch (PlaywrightException ex)
                 {
                     return AccessibilityScanOutcome.Failure(ScanErrorCode.UnreachablePage, $"Could not reach '{url}': {ex.Message}");
+                }
+
+                // A 401/403/429 on the main document means the site itself is deliberately
+                // denying or rate-limiting the request (bot detection, auth wall, etc.) - this
+                // isn't something a re-scan or a different technique can work around, so it gets
+                // its own distinct message rather than the generic "scan failed".
+                if (response is { Status: 401 or 403 or 429 })
+                {
+                    return AccessibilityScanOutcome.Failure(
+                        ScanErrorCode.AccessRestricted,
+                        $"This page can't be scanned because the site restricted the request (HTTP {response.Status}). " +
+                        "This usually means the site blocks automated/script-based access.");
                 }
 
                 AxeRawResult axeResult;
@@ -144,7 +166,22 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 }
 
                 playwright ??= await Playwright.CreateAsync();
-                browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+
+                try
+                {
+                    browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                }
+                catch (PlaywrightException ex) when (ex.Message.Contains("Executable doesn't exist"))
+                {
+                    // First run on this machine: Chromium hasn't been downloaded yet. Install it
+                    // automatically (a one-time download, same as running
+                    // `playwright.ps1 install chromium` by hand) and retry once, rather than
+                    // requiring every consumer to run a manual post-install step.
+                    logger.LogWarning(ex, "Chromium is not installed yet. Downloading it now - this happens once per machine and may take a minute.");
+                    await InstallChromiumAsync();
+                    browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
+                }
+
                 return browser;
             }
             finally
@@ -152,6 +189,17 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
                 initLock.Release();
             }
         }
+
+        private static Task InstallChromiumAsync() => Task.Run(() =>
+        {
+            var exitCode = Microsoft.Playwright.Program.Main(["install", "chromium"]);
+            if (exitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Automatic Chromium install failed (exit code {exitCode}). " +
+                    "Try running 'playwright install chromium' manually from the application's build output.");
+            }
+        });
 
         private static readonly JsonSerializerOptions jsonOptions = new() { PropertyNameCaseInsensitive = true };
 

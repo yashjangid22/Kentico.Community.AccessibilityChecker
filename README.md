@@ -58,29 +58,24 @@ expected behavior, not a bug, if you notice it stop working after deploying.
 
 | Xperience Version | Library Version |
 | ------------------ | --------------- |
-| >= 31.5.4           | 1.2.0           |
+| >= 31.5.4           | 1.3.1           |
 
 ### Dependencies
 
 - [ASP.NET Core 8.0](https://dotnet.microsoft.com/en-us/download)
 - [Xperience by Kentico](https://docs.kentico.com)
 - [Microsoft.Playwright](https://playwright.dev/dotnet/) (added automatically as a package
-  dependency — see the browser installation step below)
+  dependency)
 
 ### Other requirements
 
-- **A headless Chromium browser**, installed once per machine/environment. `Microsoft.Playwright`
-  doesn't bundle browser binaries, so after your **first build** of the application that
-  references this package, run:
-
-  ```powershell
-  pwsh <your-app>/bin/Debug/<your-target-framework>/playwright.ps1 install chromium
-  ```
-
-  This only needs to be done once per machine (and once per deployment target/CI environment) —
-  not on every build.
-- No database setup is required beyond that. The scan history table is created automatically the
-  first time the feature is used, in the same database your Xperience application already uses.
+- **A headless Chromium browser** is required to render pages for scanning, but you don't need to
+  install it yourself. The first time you click **Scan**, if Chromium isn't present yet on that
+  machine, it's downloaded automatically (a one-time, ~180MB download that takes roughly a minute)
+  and the scan completes once it's ready. Every scan after that is instant, and this only happens
+  once per machine/deployment target.
+- No database setup is required. The scan history table is created automatically the first time
+  the feature is used, in the same database your Xperience application already uses.
 
 ## Package Installation
 
@@ -103,10 +98,9 @@ themselves automatically once the package is referenced.
 
 1. `dotnet add package XperienceCommunity.AccessibilityChecker`
 2. Add `builder.Services.AddAccessibilityChecker();` in `Program.cs`
-3. Build the application once, then run `playwright.ps1 install chromium` from its build output
-   (see [Other requirements](#other-requirements) above)
-4. Run the application, open the admin, and find **Accessibility checker** under **Development**
-5. Paste a URL and click **Scan**
+3. Run the application, open the admin, and find **Accessibility checker** under **Development**
+4. Paste a URL and click **Scan** — the first scan on a new machine takes a bit longer while
+   Chromium downloads automatically in the background; every scan after that is fast
 
 ## Full Instructions
 

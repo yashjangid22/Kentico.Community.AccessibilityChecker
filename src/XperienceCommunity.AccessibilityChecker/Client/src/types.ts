@@ -21,7 +21,7 @@ export interface ScanResult {
     issuesBySeverity: IssuesBySeverity;
 }
 
-export type ScanErrorCode = "InvalidUrl" | "UnreachablePage" | "Timeout" | "ScanFailed";
+export type ScanErrorCode = "InvalidUrl" | "UnreachablePage" | "Timeout" | "AccessRestricted" | "ScanFailed";
 
 export interface ScanApiError {
     code: ScanErrorCode;

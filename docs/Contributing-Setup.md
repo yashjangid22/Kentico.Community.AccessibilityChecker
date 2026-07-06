@@ -59,20 +59,21 @@ the build will fail to find the file rather than silently skipping it.
 
 The accessibility scan feature renders pages with a headless Chromium browser via
 [Playwright for .NET](https://playwright.dev/dotnet/). The `Microsoft.Playwright` NuGet package
-does not bundle browser binaries - install Chromium once per machine (dev box and CI) after building
-the **consuming application** (the Sample Project below, or your own site) - not this library
-project itself. A class library's own build output does not copy its dependency assemblies, so
-`playwright.ps1` only works from an app's build output, where `Microsoft.Playwright.dll` is
-actually present alongside it:
+does not bundle browser binaries, but `PlaywrightAccessibilityScanService` detects a missing
+Chromium install on first use and downloads it automatically (see `GetBrowserAsync`'s
+`PlaywrightException` handling for `"Executable doesn't exist"`), so no manual step is required
+for consumers of the package. For local dev/CI on this repo, you can still trigger the same
+download ahead of time if you'd rather not wait on the first test run - build the **consuming
+application** first (the Sample Project below, or your own site - not this library project
+itself, since a class library's own build output doesn't copy its dependency assemblies), then:
 
 ```powershell
 pwsh <path-to-consuming-app>/bin/Debug/<tfm>/playwright.ps1 install chromium
 # e.g. pwsh examples/DancingGoat/bin/Debug/net8.0/playwright.ps1 install chromium
 ```
 
-This is a manual, one-time-per-machine step, deliberately not wired into `dotnet build` - running a
-browser download on every build would slow down normal development for no benefit after the first
-install.
+This is entirely optional now and deliberately not wired into `dotnet build` - running a browser
+download on every build would slow down normal development for no benefit after the first install.
 
 ## Sample Project
 

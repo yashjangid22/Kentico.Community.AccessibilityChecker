@@ -26,28 +26,27 @@ to be registered manually — the admin application tile, its page, and the API 
 discovered automatically once the package is referenced (Xperience by Kentico scans referenced
 assemblies for admin modules on startup).
 
-### 1.3 Install the headless browser (one-time, per machine)
+### 1.3 The headless browser installs itself automatically
 
 Scanning is done by rendering the target page in a real, headless Chromium browser
 ([Playwright for .NET](https://playwright.dev/dotnet/)), so axe-core can inspect the fully
 rendered DOM — including anything added by JavaScript. Playwright's NuGet package does **not**
-bundle the browser binary; it has to be downloaded once per machine (and once per deployment
-target/CI environment).
+bundle the browser binary, but you don't need to install it manually: the first time you click
+**Scan** on a machine that doesn't have Chromium yet, the package detects that and downloads it
+automatically (about 180MB, roughly a minute depending on your connection), then completes that
+same scan once it's ready. Every scan after that is fast, and this only happens once per
+machine/deployment target — you'll see a log line ("Chromium is not installed yet...") the one
+time it happens.
 
-Build your application first, then run:
+If you'd rather not wait on the first scan (e.g. to warm up a new deployment ahead of time), you
+can still trigger the same download manually after your first build:
 
 ```powershell
 pwsh <your-app>/bin/Debug/<your-target-framework>/playwright.ps1 install chromium
-# example: pwsh MySite/bin/Debug/net8.0/playwright.ps1 install chromium
 ```
 
-**Important**: run this from *your application's* build output, not from inside this package.
-Class libraries don't copy their own dependencies into their build output, so
-`Microsoft.Playwright.dll` (which the install script needs to load) only exists next to
-`playwright.ps1` once it's part of a real, runnable application — which yours is.
-
-This is a one-time step per environment. You do not need to re-run it after every build, only
-after setting up a new machine or deployment target.
+This is entirely optional now — it's the same download the app performs automatically, just done
+ahead of time instead of on first use.
 
 ### 1.4 Verify it's installed
 
@@ -134,8 +133,10 @@ staging site, scan its actual public/staging URL instead of `localhost`.
 | --- | --- |
 | "Scanning internal/private network addresses is not allowed" | You're scanning `localhost`/a private IP while the app is *not* running in the `Development` environment. Expected in Production/Staging — see [2.5](#25-scanning-your-own-local-site). |
 | "Could not resolve host '...'" | The URL's domain doesn't resolve from the server the admin is running on. Check for typos, or that the target site is actually reachable from that machine (not just your own laptop). |
-| Scan fails with a timeout | The target page took too long to load (30 second budget). Usually means the page itself is slow or hanging, not a problem with this feature. |
-| "Unable to start the headless browser" / scan fails immediately every time | Chromium isn't installed for Playwright in this environment yet — see [1.3](#13-install-the-headless-browser-one-time-per-machine). |
+| Scan fails with a timeout | The target page took too long to become interactive (30 second budget). Usually means the page itself is slow or hanging, not a problem with this feature. |
+| "Access restricted by this site" | The target site responded with HTTP 401/403/429 on the page itself — it's deliberately blocking automated/script-based access (bot detection, rate limiting, an auth wall). Re-scanning won't help; this is the site's own policy, not something this tool can work around. |
+| "Automatic Chromium install failed" / scan fails immediately every time | The one-time automatic browser download (see [1.3](#13-the-headless-browser-installs-itself-automatically)) couldn't complete — usually a network/firewall issue preventing the download. Check outbound internet access from the server, or run the manual install command in 1.3 to see the underlying error directly. |
+| First scan on a new machine takes noticeably longer than expected | Normal — Chromium is downloading automatically in the background (see [1.3](#13-the-headless-browser-installs-itself-automatically)). Every scan after that is fast. |
 | `dotnet build`/`dotnet run` fails with `MSB3027`/"the process cannot access the file... The file is locked by" | Your application is already running in another window/process and has its own `.exe` locked. Stop that running instance (Task Manager, or Ctrl+C in the terminal that launched it), then build/run again. Not specific to this package — happens with any running .NET app. |
 | Accessibility checker tile is missing from the admin | Confirm the package is referenced by the *admin-hosting* project, and that you haven't excluded admin components in a `SeparatedAdmin` build. |
 | Page loads, but every action (Scan, Re-scan, Delete) fails | `builder.Services.AddAccessibilityChecker();` is likely missing from `Program.cs` — see [1.2](#12-register-the-services). |

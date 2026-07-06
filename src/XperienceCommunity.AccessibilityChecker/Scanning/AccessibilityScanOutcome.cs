@@ -7,6 +7,7 @@ namespace XperienceCommunity.AccessibilityChecker.Scanning
         InvalidUrl,
         UnreachablePage,
         Timeout,
+        AccessRestricted,
         ScanFailed
     }
 
