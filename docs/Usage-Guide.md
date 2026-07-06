@@ -27,7 +27,7 @@ discovered automatically once the package is referenced (Xperience by Kentico sc
 assemblies for admin modules on startup).
 
 
-### 1.4 Verify it's installed
+### 1.3 Verify it's installed
 
 Run your application, sign in to the admin (`/admin`), and look for an **Accessibility checker**
 tile under the **Development** section on the dashboard:
